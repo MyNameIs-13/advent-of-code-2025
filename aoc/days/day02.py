@@ -17,55 +17,45 @@ SUBMIT = True
 # EXAMPLE_DATA = True
 
 
-def solve_part_a(input_data: str) -> Any:
-    result = 0
-    for line in utils.input_data_to_list(input_data):
-        id_ranges = line.split(',')
-        for id_range in id_ranges:
-            logger.debug(f'id range: {id_range}')
-            if not id_range:
-                continue
-            start, end = id_range.split('-')
-            start = int(start)
-            end = int(end)
-            for id in range(start, end + 1):
-                id_str = str(id)
-                id_len = len(id_str)
-                if id_len % 2 == 0:
-                    id_len_half = id_len // 2
-                    if id_str[0:id_len_half] == id_str[id_len_half:]:
-                        result += id
-                        logger.debug(f'Found invalid id {id}')
-    return result
+def get_id_ranges(input_data: str) -> list:
+    if EXAMPLE_DATA:
+        input_data.replace('\n', '')
+    return  [tuple(map(int, id_range.split('-'))) for id_range in input_data.split(',')]
 
 
-def solve_part_b(input_data: str) -> Any:
-    result = 0
-    for line in utils.input_data_to_list(input_data):
-        id_ranges = line.split(',')
-        for id_range in id_ranges:
-            logger.debug(f'id range: {id_range}')
-            if not id_range:
-                continue
-            start, end = id_range.split('-')
-            start = int(start)
-            end = int(end)
-            for id in range(start, end + 1):
-                id_str = str(id)
-                id_len = len(id_str)
-                id_len_half = id_len // 2
-                if id_len % 2 == 0:
-                    if id_str[0:id_len_half] == id_str[id_len_half:]:
-                        result += id
-                        logger.debug(f'Found invalid id {id}')
-                        continue
+def get_invalid_ids(id_ranges_list: list, part_b: bool = False) -> list:
+    """returns ids wich are constructed with a silly pattern"""
+    invalid_ids = []
+    for start, end in id_ranges_list:
+        for id in range(start, end + 1):
+            id_str = str(id)
+            id_len_half = len(id_str) // 2
+            # Check if the first half of the id is the same as the second half
+            if id_str[0:id_len_half] == id_str[id_len_half:]:
+                invalid_ids.append(id)
+            elif part_b:
+                # Check if any pattern occurs at least twice (check all pattern from 1 char to half of the length of the id)
                 for i in range(id_len_half):
                     pattern = id_str[:i+1]
                     if id_str.replace(pattern, '') == '':
-                        result += id
-                        logger.debug(f'Found invalid id {id}')
+                        invalid_ids.append(id)
                         break
-                        
+    return invalid_ids
+    
+
+def solve_part_a(input_data: str) -> Any:
+    id_ranges_list = get_id_ranges(input_data)
+    invalid_ids = get_invalid_ids(id_ranges_list)
+    logger.debug(f'Invalid ids: {invalid_ids}')
+    result = sum(invalid_ids)
+    return result
+    
+
+def solve_part_b(input_data: str) -> Any:
+    id_ranges_list = get_id_ranges(input_data)
+    invalid_ids = get_invalid_ids(id_ranges_list, part_b=True)
+    logger.debug(f'Invalid ids: {invalid_ids}')
+    result = sum(invalid_ids)
     return result
 
 
