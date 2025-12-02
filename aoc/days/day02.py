@@ -47,16 +47,14 @@ def solve_part_a(input_data: str) -> Any:
     id_ranges_list = get_id_ranges(input_data)
     invalid_ids = get_invalid_ids(id_ranges_list)
     logger.debug(f'Invalid ids: {invalid_ids}')
-    result = sum(invalid_ids)
-    return result
+    return sum(invalid_ids)
     
 
 def solve_part_b(input_data: str) -> Any:
     id_ranges_list = get_id_ranges(input_data)
     invalid_ids = get_invalid_ids(id_ranges_list, part_b=True)
     logger.debug(f'Invalid ids: {invalid_ids}')
-    result = sum(invalid_ids)
-    return result
+    return sum(invalid_ids)
 
 
 def main() -> None:
