@@ -38,7 +38,7 @@ def get_highest_joltages(battery_banks: list, total_batteries_to_enable: int) ->
             logger.debug(f'battery_value: {battery_value}')
             # detect index of value that is added to joltage and add this index to the range start to find the next battery after this index
             range_start += battery_bank[range_start : range_stop].index(battery_value) + 1 
-            # multiply with ... 10000, 1000, 100, 10 ... depen
+            # multiply with ... 10000, 1000, 100, 10 ... depending on how many batteries are left to enable before adding to the joltage
             joltage += battery_value * pow(10, batteries_left_to_enable)
             logger.debug('')
         highest_joltages.append(joltage)
