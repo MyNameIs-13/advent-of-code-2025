@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import logging
+from functools import lru_cache
 from typing import Any
 
 from aocd.models import Puzzle
@@ -24,43 +25,72 @@ def find_start(grid: utils.Grid) -> utils.Point:
         raise ValueError('No start found')
 
 
-def find_beam_splitter(reached_splitter_positions: set, grid: utils.Grid, start: utils.Point, running_beams_set: set | None = None) -> None:
+def find_beam_splitter(reached_splitter_positions: set, grid: utils.Grid, start: utils.Point, graph: dict, running_beams_set: set | None = None) -> None:
     if running_beams_set is None:
         running_beams_set = set()
     next_p = start + utils.DIRECTIONS['down']
     if next_p in running_beams_set:
         return
     running_beams_set.add(next_p)
-    while grid.in_bounds(next_p):
+    utils.Graph.add_edge(graph, start, next_p, 0)
+    while True:
         if grid[next_p] == '^':
             reached_splitter_positions.add(next_p)
             left_new = next_p + utils.DIRECTIONS['left']
             right_new = next_p + utils.DIRECTIONS['right']
             if grid.in_bounds(left_new):
-                find_beam_splitter(reached_splitter_positions, grid, left_new, running_beams_set)
+                utils.Graph.add_edge(graph, next_p, left_new, 0)
+                find_beam_splitter(reached_splitter_positions, grid, left_new, graph, running_beams_set)
             if grid.in_bounds(right_new):
-                find_beam_splitter(reached_splitter_positions, grid, right_new, running_beams_set)                
+                utils.Graph.add_edge(graph, next_p, right_new, 0)
+                find_beam_splitter(reached_splitter_positions, grid, right_new, graph, running_beams_set)                
             break
+        next_p_plus = next_p + utils.DIRECTIONS['down']
+        if grid.in_bounds(next_p_plus):
+            if grid[next_p] != '^':
+                utils.Graph.add_edge(graph, next_p, next_p_plus, 0)
+            next_p = next_p_plus
         else:
-            next_p += utils.DIRECTIONS['down']
+            break
         logger.debug(f'next_p: {next_p}')
-        
+      
         
 def solve_part_a(input_data: str) -> Any:
     grid = utils.Grid(input_data)
     start = find_start(grid)
     reached_splitter_positions = set()
-    find_beam_splitter(reached_splitter_positions, grid, start)
+    find_beam_splitter(reached_splitter_positions, grid, start, {})
     logger.debug(f'reached_splitter_positions: {reached_splitter_positions}')
     return len(reached_splitter_positions)
 
 
 def solve_part_b(input_data: str) -> Any:
-    # TODO: implement solution for part B
-    result = None
-    for line in utils.input_data_to_list(input_data):
-        logger.debug(line)
-    return result
+    
+    @lru_cache(maxsize=None)
+    def timeline_paths_for_endpoint(end: utils.Point) -> int:
+        if end == start:
+            return 1
+        _predecessors = predecessors.get(end)
+        if not _predecessors:
+            return 0
+        return sum(timeline_paths_for_endpoint(p) for p in _predecessors)    
+    
+    grid = utils.Grid(input_data)
+    start = find_start(grid)
+    reached_splitter_positions = set()
+    graph = {}
+    find_beam_splitter(reached_splitter_positions, grid, start, graph)
+
+    _, predecessors = utils.Graph._do_dijkstra(graph, start, return_all_paths=True)
+  
+    predecessors_keys = predecessors.keys()
+    timelines = 0
+    for i in range(grid.cols):
+        end = utils.Point(grid.rows - 1, i)
+        if end in predecessors_keys:
+            timelines += timeline_paths_for_endpoint(end)
+
+    return timelines
 
 
 def main() -> None:
