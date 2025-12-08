@@ -52,7 +52,7 @@ def build_circuits(distances_dict: dict, junction_boxes: set, shortest_connectio
         if shortest_connection_count is None and len(circuits) == 1:
             logger.debug(points)
             return list(points)
-        elif shortest_connection_count and i >= shortest_connection_count:
+        elif shortest_connection_count and i >= shortest_connection_count - 1:
             break
         i += 1
     circuits.sort(key=len, reverse=True)
