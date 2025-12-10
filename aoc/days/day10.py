@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from itertools import combinations
 import logging
+from itertools import combinations, combinations_with_replacement
 from typing import Any
 
 from aocd.models import Puzzle
@@ -34,10 +34,8 @@ def parse_machine(line: str) -> tuple[list, list, list]:
                 buttons.append(list(map(int, inside.split(','))))
         elif p.startswith('{'):
             inside = p.strip('{}')
-            if inside == '':
-                joltages.append([])
-            else:
-                joltages.append(list(map(int, inside.split(','))))
+            if inside:
+                joltages = list(map(int, inside.split(',')))
 
     return target, buttons, joltages
 
@@ -67,10 +65,31 @@ def solve_part_a(input_data: str) -> Any:
 
 
 def solve_part_b(input_data: str) -> Any:
-    # TODO: implement solution for part B
-    result = None
-    for line in utils.input_data_to_list(input_data):
-        logger.debug(line)
+    # TODO: way too slow :(
+    result = 0
+    for line in input_data.splitlines():
+        _, buttons, joltages = parse_machine(line)
+        joltages_reached = False
+        presses = 1
+        while presses < 1000:  # sanity check
+            button_combis = combinations_with_replacement(buttons, presses)
+            for button_combi in button_combis:
+                state = [0 for i in range(len(joltages))]
+                for button in button_combi:
+                    for button_light in button:
+                        state[button_light] += 1
+                    if state == joltages:
+                        logger.info(f'Found solution for {joltages} with {presses} pressed - buttons: {button_combi}')
+                        result += presses
+                        joltages_reached = True
+                        break
+                if joltages_reached:
+                    break
+            if joltages_reached:
+                break
+            presses += 1
+        else:
+            logger.warning(f'No solution found for {joltages} with {presses} pressed')
     return result
 
 
