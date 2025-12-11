@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import logging
-from functools import lru_cache
 from typing import Any
 
 from aocd.models import Puzzle
@@ -17,47 +16,31 @@ SUBMIT = True
 # logger.setLevel(logging.DEBUG)
 # EXAMPLE_DATA = True
 
-def create_graph(input_data: str) -> dict:
-    graph = {}
+def create_graph(input_data: str) -> utils.Graph:
+    graph = utils.Graph()
     for line in input_data.splitlines():
         from_node, to_nodes = line.split(':')
         for node in to_nodes.split():
-            utils.Graph.add_edge(graph, from_node, node.strip(), 0)
+            graph.add_connection(from_node, node.strip(), 0)
     return graph
 
 
+def apply_bitmask_for_node(node: Any, bitmask: int) -> int:
+    if node == 'dac':
+        return bitmask | 1
+    elif node == 'fft':
+        return bitmask | 2
+    return bitmask
+    
+
 def solve_part_a(input_data: str) -> Any:
     graph = create_graph(input_data)
-    all_paths, lowest_cost = utils.Graph.get_shortest_paths(graph, 'you', 'out', return_all_paths=True)
-    return len(all_paths)
+    return graph.count_shortest_paths('you', 'out')
 
 
 def solve_part_b(input_data: str) -> Any:
-    
-    @lru_cache(maxsize=None)
-    def timeline_paths_for_endpoint(node: str, dac_found: bool, fft_found: bool) -> int:
-        if node == start and dac_found and fft_found:
-            return 1
-        elif node == start:
-            return 0
-        
-        if node == 'dac':
-            dac_found = True
-        if node == 'fft':
-            fft_found = True
-            
-        _predecessors = predecessors.get(node)
-        if not _predecessors:
-            return 0
-        return sum(timeline_paths_for_endpoint(p, dac_found, fft_found) for p in _predecessors)
-    
-    graph = create_graph(input_data)            
-    start = 'svr'
-    end = 'out'
-    _, predecessors = utils.Graph._do_dijkstra(graph, start, return_all_paths=True)
-    timelines = timeline_paths_for_endpoint(end, False, False)
-
-    return timelines
+    graph = create_graph(input_data)
+    return graph.count_shortest_paths('svr', 'out', bitmask_goal=3, bitmask_for_node_function=apply_bitmask_for_node)
 
 
 def main() -> None:
