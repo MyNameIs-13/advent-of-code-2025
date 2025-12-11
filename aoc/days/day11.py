@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import logging
+from functools import lru_cache
 from typing import Any
 
 from aocd.models import Puzzle
@@ -16,39 +17,47 @@ SUBMIT = True
 # logger.setLevel(logging.DEBUG)
 # EXAMPLE_DATA = True
 
-def parse_input(input_data: str) -> dict:
-    graph_base_data = {}
+def create_graph(input_data: str) -> dict:
+    graph = {}
     for line in input_data.splitlines():
         from_node, to_nodes = line.split(':')
-        graph_base_data[from_node.strip()] = [node.strip() for node in to_nodes.split()]
-    return graph_base_data
+        for node in to_nodes.split():
+            utils.Graph.add_edge(graph, from_node, node.strip(), 0)
+    return graph
 
 
 def solve_part_a(input_data: str) -> Any:
-    graph_base_data = parse_input(input_data)
-    logger.debug(graph_base_data)
-    graph = {}
-    for from_node, to_nodes in graph_base_data.items():
-        for node in to_nodes:
-            utils.Graph.add_edge(graph, from_node, node, 0)
+    graph = create_graph(input_data)
     all_paths, lowest_cost = utils.Graph.get_shortest_paths(graph, 'you', 'out', return_all_paths=True)
     return len(all_paths)
 
 
 def solve_part_b(input_data: str) -> Any:
-    # TODO: way too slow :(
-    graph_base_data = parse_input(input_data)
-    logger.debug(graph_base_data)
-    graph = {}
-    for from_node, to_nodes in graph_base_data.items():
-        for node in to_nodes:
-            utils.Graph.add_edge(graph, from_node, node, 0)
-    all_paths, lowest_cost = utils.Graph.get_shortest_paths(graph, 'svr', 'out', return_all_paths=True)
-    problem_paths = []
-    for path_to_check in all_paths:
-        if all(n in path_to_check for n in ['fft', 'dac']):
-            problem_paths.append(path_to_check)
-    return len(problem_paths)
+    
+    @lru_cache(maxsize=None)
+    def timeline_paths_for_endpoint(node: str, dac_found: bool, fft_found: bool) -> int:
+        if node == start and dac_found and fft_found:
+            return 1
+        elif node == start:
+            return 0
+        
+        if node == 'dac':
+            dac_found = True
+        if node == 'fft':
+            fft_found = True
+            
+        _predecessors = predecessors.get(node)
+        if not _predecessors:
+            return 0
+        return sum(timeline_paths_for_endpoint(p, dac_found, fft_found) for p in _predecessors)
+    
+    graph = create_graph(input_data)            
+    start = 'svr'
+    end = 'out'
+    _, predecessors = utils.Graph._do_dijkstra(graph, start, return_all_paths=True)
+    timelines = timeline_paths_for_endpoint(end, False, False)
+
+    return timelines
 
 
 def main() -> None:
